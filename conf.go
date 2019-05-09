@@ -3,7 +3,6 @@ package mongo4g
 import (
 	"encoding/json"
 	"fmt"
-	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
@@ -50,11 +49,14 @@ func NewConnectionParams(path string) (cp ConnectionParameters, err error) {
 	if err = configuration.LoadRelativePath(path, &cp); err != nil {
 		return
 	}
-	var connectUrl *url.URL
-	if connectUrl, err = url.Parse(cp.ConnectString); err != nil {
-		return
+
+	if p1 := strings.LastIndex(cp.ConnectString, "/"); p1 > 0 {
+		if p2 := strings.LastIndex(cp.ConnectString, "?"); p2 > p1 {
+			cp.database = cp.ConnectString[p1+1 : p2]
+		} else {
+			cp.database = cp.ConnectString[p1+1:]
+		}
 	}
-	cp.database = strings.Trim(connectUrl.Path, "/")
 	if cp.database == "" {
 		err = fmt.Errorf("database name empty")
 		return
